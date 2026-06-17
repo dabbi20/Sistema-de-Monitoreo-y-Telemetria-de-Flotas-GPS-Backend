@@ -1,24 +1,24 @@
-# Fleet Telemetry System 
+# Fleet Telemetry System
 
 Sistema de telemetría vehicular desarrollado con Spring Boot para el procesamiento de posiciones GPS, monitoreo de estados de vehículos, generación de eventos de auditoría y consulta de métricas operativas.
 
 ---
 
-##  Descripción
+## Descripción
 
 Fleet Telemetry System permite recibir información GPS de vehículos, calcular automáticamente su estado operativo y almacenar un historial de posiciones.
 
 El sistema identifica tres estados principales:
 
-* **EN_MOVIMIENTO**: el vehículo cambia su posición.
-* **DETENIDO**: el vehículo permanece sin cambios de posición durante más de 60 segundos.
-* **SIN_SENAL**: el vehículo no reporta información durante más de 120 segundos.
+* **EN_MOVIMIENTO:** el vehículo cambia su posición.
+* **DETENIDO:** el vehículo permanece sin cambios de posición durante más de 60 segundos.
+* **SIN_SENAL:** el vehículo no reporta información durante más de 120 segundos.
 
 Además, registra eventos de auditoría para cada cambio importante y expone métricas globales del sistema.
 
 ---
 
-##  Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 * Java 17
 * Spring Boot 3
@@ -27,12 +27,16 @@ Además, registra eventos de auditoría para cada cambio importante y expone mé
 * H2 Database
 * Lombok
 * Maven
+* JUnit 5
+* Mockito
+* Docker
+* Docker Compose
 * Postman
 * UML
 
 ---
 
-##  Arquitectura
+## Arquitectura
 
 La aplicación sigue una arquitectura en capas:
 
@@ -46,7 +50,7 @@ Repository
 Database
 ```
 
-### Componentes principales
+### Componentes Principales
 
 * VehicleController
 * VehicleService
@@ -58,19 +62,19 @@ Database
 
 ---
 
-##  Modelo de Dominio
+## Modelo de Dominio
 
 ![Modelo de Dominio](docs/domain-model.png)
 
 ---
 
-##  Diagrama de Componentes
+## Diagrama de Componentes
 
 ![Diagrama de Componentes](docs/components-diagram.png)
 
 ---
 
-##  Modelo de Datos
+## Modelo de Datos
 
 ### Vehicle
 
@@ -113,7 +117,7 @@ Tipos de evento:
 
 ---
 
-##  Estados del Vehículo
+## Estados del Vehículo
 
 | Estado        | Descripción                                  |
 | ------------- | -------------------------------------------- |
@@ -123,7 +127,7 @@ Tipos de evento:
 
 ---
 
-##  API REST
+## API REST
 
 ### Registrar posición GPS
 
@@ -217,7 +221,7 @@ Respuesta:
 
 ---
 
-##  Manejo de Errores
+## Manejo de Errores
 
 ### Vehículo inexistente
 
@@ -238,6 +242,8 @@ Respuesta:
 
 ### Coordenadas inválidas
 
+Solicitud:
+
 ```json
 {
   "vehicle_id": "VH-002",
@@ -257,7 +263,7 @@ Respuesta:
 
 ---
 
-##  Evidencias de Pruebas
+## Evidencias de Pruebas
 
 ### Crear vehículo
 
@@ -293,12 +299,124 @@ Respuesta:
 
 ---
 
-##  Ejecución Local
+## Pruebas Unitarias
+
+El proyecto incluye pruebas unitarias para validar la lógica principal de negocio.
+
+### Cobertura de pruebas
+
+#### VehicleServiceTest
+
+Valida:
+
+* Creación de vehículos
+* Búsqueda por ID
+* Eliminación de vehículos
+* Consulta de vehículos existentes
+* Manejo de vehículos inexistentes
+
+#### VehicleStatusServiceTest
+
+Valida:
+
+* Estado EN_MOVIMIENTO
+* Estado DETENIDO
+* Estado SIN_SENAL
+* Cambios de estado
+* Reglas de transición
+
+#### MetricsServiceTest
+
+Valida:
+
+* Conteo total de vehículos
+* Vehículos en movimiento
+* Vehículos detenidos
+* Vehículos sin señal
+
+#### FleetTelemetrySystemApplicationTests
+
+Valida:
+
+* Carga correcta del contexto Spring Boot
+
+### Resultado de ejecución
+
+```bash
+mvn test
+```
+
+Resultado:
+
+```text
+Tests run: 13
+Failures: 0
+Errors: 0
+Skipped: 0
+
+BUILD SUCCESS
+```
+
+---
+
+## Dockerización
+
+El sistema puede ejecutarse completamente mediante Docker.
+
+### Construir imagen
+
+```bash
+docker build -t fleet-telemetry-system .
+```
+
+### Ejecutar contenedor
+
+```bash
+docker run -p 8082:8081 fleet-telemetry-system
+```
+
+Aplicación disponible en:
+
+```text
+http://localhost:8082
+```
+
+---
+
+## Docker Compose
+
+Levantar servicios:
+
+```bash
+docker compose up -d
+```
+
+Verificar contenedores:
+
+```bash
+docker ps
+```
+
+Detener servicios:
+
+```bash
+docker compose down
+```
+
+Aplicación disponible en:
+
+```text
+http://localhost:8082
+```
+
+---
+
+## Ejecución Local
 
 Clonar repositorio:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/dabbi20/Sistema-de-Monitoreo-y-Telemetria-de-Flotas-GPS-Backend.git
 ```
 
 Entrar al proyecto:
@@ -319,7 +437,7 @@ Ejecutar:
 ./mvnw spring-boot:run
 ```
 
-La aplicación estará disponible en:
+Aplicación disponible en:
 
 ```text
 http://localhost:8081
@@ -327,12 +445,67 @@ http://localhost:8081
 
 ---
 
-##  Autor
+## Estructura del Proyecto
 
-David Carrasco
+```text
+fleet-telemetry-system
+│
+├── docs
+│   ├── components-diagram.png
+│   ├── domain-model.png
+│   ├── postman-create-vehicle.png
+│   ├── postman-get-events.png
+│   ├── postman-get-metrics.png
+│   ├── postman-get-vehicles.png
+│   ├── postman-validation-error.png
+│   ├── postman-vehicle-moving.png
+│   ├── postman-vehicle-not-found.png
+│   └── postman-vehicle-stopped.png
+│
+├── src
+│   ├── main
+│   │   ├── java
+│   │   └── resources
+│   │
+│   └── test
+│       └── java
+│
+├── Dockerfile
+├── docker-compose.yml
+├── pom.xml
+└── README.md
+```
 
-Ingenieron en Sistemas | Desarrollador Full Stack
+---
+
+## Estado del Proyecto
+
+Proyecto finalizado en su versión MVP.
+
+Funcionalidades implementadas:
+
+* Registro de posiciones GPS
+* Gestión automática de estados de vehículos
+* Historial de posiciones
+* Eventos de auditoría
+* Métricas operativas
+* Validaciones de entrada
+* Manejo global de excepciones
+* Base de datos H2
+* API REST
+* Pruebas unitarias
+* Docker
+* Docker Compose
+* Documentación UML
+* Evidencias Postman
+
+---
+
+## Autor
+
+### David Carrasco
+
+Estudiante de Ingeniería de Sistemas | Desarrollador Backend Java
 
 GitHub:
 https://github.com/dabbi20
-

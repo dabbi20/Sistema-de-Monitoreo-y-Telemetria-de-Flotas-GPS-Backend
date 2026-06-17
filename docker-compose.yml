@@ -1,0 +1,7 @@
+services:
+  fleet-telemetry-system:
+    image: fleet-telemetry-system
+    container_name: fleet-telemetry-system
+    ports:
+      - "8082:8081"
+    restart: unless-stopped
