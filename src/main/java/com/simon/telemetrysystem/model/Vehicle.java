@@ -36,6 +36,9 @@ public class Vehicle {
     @Column(name = "last_seen")
     private Instant lastSeen;
 
+    @Column(name = "last_position_changed_at")
+    private Instant lastPositionChangedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private VehicleStatus status;
