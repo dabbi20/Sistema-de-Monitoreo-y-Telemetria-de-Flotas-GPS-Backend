@@ -1,4 +1,4 @@
-# Fleet Telemetry System 🚚📡
+# Fleet Telemetry System 
 
 Sistema de telemetría vehicular desarrollado con Spring Boot para el procesamiento de posiciones GPS, monitoreo de estados de vehículos, generación de eventos de auditoría y consulta de métricas operativas.
 
@@ -327,7 +327,7 @@ http://localhost:8081
 
 ---
 
-## 👨 Autor
+##  Autor
 
 David Carrasco
 
