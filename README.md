@@ -494,7 +494,7 @@ Esto reforzó la importancia de utilizar la IA como una herramienta de apoyo y v
 
 Enlace:
 
-PENDIENTE
+https://youtu.be/HmQwG2waTMU
 
 ---
 
