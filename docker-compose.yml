@@ -1,5 +1,6 @@
 services:
   fleet-telemetry-system:
+    build: .
     image: fleet-telemetry-system
     container_name: fleet-telemetry-system
     ports:

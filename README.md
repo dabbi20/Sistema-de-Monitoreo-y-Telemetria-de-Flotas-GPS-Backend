@@ -1,24 +1,26 @@
-# Fleet Telemetry System
+# Fleet Telemetry System - Backend
 
-Sistema de telemetría vehicular desarrollado con Spring Boot para el procesamiento de posiciones GPS, monitoreo de estados de vehículos, generación de eventos de auditoría y consulta de métricas operativas.
-
----
-
-## Descripción
-
-Fleet Telemetry System permite recibir información GPS de vehículos, calcular automáticamente su estado operativo y almacenar un historial de posiciones.
-
-El sistema identifica tres estados principales:
-
-* **EN_MOVIMIENTO:** el vehículo cambia su posición.
-* **DETENIDO:** el vehículo permanece sin cambios de posición durante más de 60 segundos.
-* **SIN_SENAL:** el vehículo no reporta información durante más de 120 segundos.
-
-Además, registra eventos de auditoría para cada cambio importante y expone métricas globales del sistema.
+Sistema de telemetría vehicular desarrollado con Spring Boot para la recepción de coordenadas GPS, cálculo automático de estados de vehículos, generación de eventos de auditoría y consulta de métricas operativas.
 
 ---
 
-## Tecnologías Utilizadas
+# Descripción General
+
+Este proyecto implementa el backend de un Sistema de Telemetría y Monitoreo de Flotas GPS.
+
+La aplicación recibe coordenadas GPS desde múltiples vehículos, almacena el historial de posiciones y calcula automáticamente el estado operativo de cada unidad en tiempo real.
+
+Estados soportados:
+
+* EN_MOVIMIENTO
+* DETENIDO
+* SIN_SENAL
+
+Además, el sistema registra eventos de auditoría para cambios importantes y expone métricas generales del estado de la flota.
+
+---
+
+# Tecnologías Utilizadas
 
 * Java 17
 * Spring Boot 3
@@ -32,13 +34,12 @@ Además, registra eventos de auditoría para cada cambio importante y expone mé
 * Docker
 * Docker Compose
 * Postman
-* UML
 
 ---
 
-## Arquitectura
+# Arquitectura Elegida
 
-La aplicación sigue una arquitectura en capas:
+Se implementó una arquitectura en capas:
 
 ```text
 Controller
@@ -50,33 +51,56 @@ Repository
 Database
 ```
 
-### Componentes Principales
+## Justificación
 
-* VehicleController
-* VehicleService
-* VehicleStatusService
-* TelemetryEventController
-* TelemetryEventService
-* MetricsController
-* MetricsService
+Esta arquitectura fue seleccionada porque:
+
+* Separa responsabilidades claramente.
+* Facilita el mantenimiento del código.
+* Permite realizar pruebas unitarias de forma sencilla.
+* Es ampliamente utilizada en aplicaciones empresariales Spring Boot.
+* Facilita la escalabilidad futura del sistema.
+
+La lógica de negocio relacionada con el cálculo de estados fue encapsulada en `VehicleStatusService`, manteniendo los controladores REST enfocados únicamente en exponer endpoints.
 
 ---
 
-## Modelo de Dominio
+# Cumplimiento de Requisitos de la Prueba
+
+| Requisito               | Estado |
+| ----------------------- | ------ |
+| POST /gps               | ✅      |
+| GET /vehicles           | ✅      |
+| GET /vehicles/{id}      | ✅      |
+| DELETE /vehicles/{id}   | ✅      |
+| Validaciones de entrada | ✅      |
+| Estados automáticos     | ✅      |
+| Historial GPS           | ✅      |
+| Eventos de auditoría    | ✅      |
+| Métricas operativas     | ✅      |
+| Manejo de errores HTTP  | ✅      |
+| Persistencia            | ✅      |
+| Pruebas unitarias       | ✅      |
+| Docker                  | ✅      |
+| Docker Compose          | ✅      |
+
+---
+
+# Modelo de Dominio
 
 ![Modelo de Dominio](docs/domain-model.png)
 
 ---
 
-## Diagrama de Componentes
+# Diagrama de Componentes
 
 ![Diagrama de Componentes](docs/components-diagram.png)
 
 ---
 
-## Modelo de Datos
+# Modelo de Datos
 
-### Vehicle
+## Vehicle
 
 Representa el estado actual de un vehículo.
 
@@ -92,9 +116,9 @@ Campos principales:
 
 ---
 
-### GpsRecord
+## GpsRecord
 
-Almacena el historial de posiciones GPS recibidas.
+Representa el historial de coordenadas GPS recibidas.
 
 Campos principales:
 
@@ -105,11 +129,11 @@ Campos principales:
 
 ---
 
-### TelemetryEvent
+## TelemetryEvent
 
 Registra eventos relevantes del sistema.
 
-Tipos de evento:
+Tipos soportados:
 
 * VEHICLE_CREATED
 * STATUS_CHANGED
@@ -117,19 +141,31 @@ Tipos de evento:
 
 ---
 
-## Estados del Vehículo
+# Lógica de Estados
 
-| Estado        | Descripción                                  |
-| ------------- | -------------------------------------------- |
-| EN_MOVIMIENTO | El vehículo cambió de posición               |
-| DETENIDO      | Sin movimiento durante más de 60 segundos    |
-| SIN_SENAL     | Sin comunicación durante más de 120 segundos |
+| Estado        | Condición                                     |
+| ------------- | --------------------------------------------- |
+| EN_MOVIMIENTO | Coordenadas distintas recibidas recientemente |
+| DETENIDO      | Misma coordenada durante al menos 60 segundos |
+| SIN_SENAL     | Sin reportes durante más de 120 segundos      |
 
 ---
 
-## API REST
+# Decisión de Diseño
 
-### Registrar posición GPS
+La especificación indica:
+
+> "Detenido: misma coordenada sin cambio durante más de 1 minuto"
+
+Para evitar cambios prematuros de estado, el sistema conserva el estado anterior cuando recibe coordenadas repetidas y únicamente cambia a DETENIDO después de acumular al menos 60 segundos consecutivos sin movimiento.
+
+Esta interpretación fue documentada para mantener consistencia con la regla funcional definida en la prueba.
+
+---
+
+# API REST
+
+## Registrar coordenada GPS
 
 ```http
 POST /gps
@@ -139,16 +175,22 @@ Ejemplo:
 
 ```json
 {
-  "vehicle_id": "VH-100",
+  "vehicle_id": "VH-001",
   "lat": 4.7110,
   "lng": -74.0721,
-  "timestamp": "2026-06-17T07:30:00Z"
+  "timestamp": "2026-06-17T10:00:00Z"
 }
+```
+
+Respuesta:
+
+```http
+201 Created
 ```
 
 ---
 
-### Obtener todos los vehículos
+## Obtener todos los vehículos
 
 ```http
 GET /vehicles
@@ -156,21 +198,15 @@ GET /vehicles
 
 ---
 
-### Obtener vehículo por ID
+## Obtener vehículo por ID
 
 ```http
 GET /vehicles/{vehicleId}
 ```
 
-Ejemplo:
-
-```http
-GET /vehicles/VH-100
-```
-
 ---
 
-### Eliminar vehículo
+## Eliminar vehículo
 
 ```http
 DELETE /vehicles/{vehicleId}
@@ -178,7 +214,7 @@ DELETE /vehicles/{vehicleId}
 
 ---
 
-### Obtener historial GPS
+## Historial GPS
 
 ```http
 GET /vehicles/{vehicleId}/records
@@ -186,7 +222,7 @@ GET /vehicles/{vehicleId}/records
 
 ---
 
-### Obtener eventos
+## Obtener eventos
 
 ```http
 GET /events
@@ -194,7 +230,7 @@ GET /events
 
 ---
 
-### Obtener eventos por vehículo
+## Obtener eventos por vehículo
 
 ```http
 GET /vehicles/{vehicleId}/events
@@ -202,34 +238,17 @@ GET /vehicles/{vehicleId}/events
 
 ---
 
-### Obtener métricas
+## Obtener métricas
 
 ```http
 GET /metrics
 ```
 
-Respuesta:
-
-```json
-{
-  "totalVehicles": 2,
-  "movingVehicles": 0,
-  "stoppedVehicles": 0,
-  "noSignalVehicles": 2
-}
-```
-
 ---
 
-## Manejo de Errores
+# Manejo de Errores
 
-### Vehículo inexistente
-
-```http
-GET /vehicles/VH-999
-```
-
-Respuesta:
+## Vehículo inexistente
 
 ```json
 {
@@ -240,19 +259,7 @@ Respuesta:
 
 ---
 
-### Coordenadas inválidas
-
-Solicitud:
-
-```json
-{
-  "vehicle_id": "VH-002",
-  "lat": 200,
-  "lng": -74.0721
-}
-```
-
-Respuesta:
+## Coordenadas inválidas
 
 ```json
 {
@@ -263,84 +270,92 @@ Respuesta:
 
 ---
 
-## Evidencias de Pruebas
+# Eventos de Auditoría
 
-### Crear vehículo
+El sistema registra automáticamente:
 
-![Create Vehicle](docs/postman-create-vehicle.png)
+### VEHICLE_CREATED
 
-### Cambio a estado EN_MOVIMIENTO
+Creación inicial de un vehículo.
 
-![Vehicle Moving](docs/postman-vehicle-moving.png)
+### STATUS_CHANGED
 
-### Cambio a estado DETENIDO
+Cambio de estado operativo.
 
-![Vehicle Stopped](docs/postman-vehicle-stopped.png)
+### VEHICLE_DELETED
 
-### Obtener vehículos
-
-![Get Vehicles](docs/postman-get-vehicles.png)
-
-### Eventos de telemetría
-
-![Events](docs/postman-get-events.png)
-
-### Métricas
-
-![Metrics](docs/postman-get-metrics.png)
-
-### Error de validación
-
-![Validation Error](docs/postman-validation-error.png)
-
-### Vehículo inexistente
-
-![Vehicle Not Found](docs/postman-vehicle-not-found.png)
+Eliminación de un vehículo.
 
 ---
 
-## Pruebas Unitarias
+# Simulador de Telemetría
 
-El proyecto incluye pruebas unitarias para validar la lógica principal de negocio.
+La solución incluye un simulador independiente encargado de generar tráfico GPS hacia la API.
 
-### Cobertura de pruebas
+Características:
 
-#### VehicleServiceTest
+* Múltiples vehículos simulados.
+* Coordenadas dentro del área de Bogotá.
+* Envío periódico de posiciones.
+* Vehículos en movimiento.
+* Vehículos detenidos.
+* Inyección de errores de validación.
+* Generación automática de cambios de estado.
+
+El simulador consume:
+
+```http
+POST /gps
+```
+
+---
+
+# Reflexión: Eliminación de Vehículos
+
+Si en un entorno productivo existiera simultáneamente una base de datos persistente y un sistema de caché como Redis, al eliminar un vehículo sería necesario garantizar que ambos almacenes permanezcan sincronizados.
+
+De lo contrario, podría ocurrir que el vehículo desaparezca de la base de datos pero continúe disponible en caché, generando respuestas inconsistentes para los usuarios.
+
+En un sistema real podrían utilizarse mecanismos como invalidación de caché, consistencia eventual o estrategias transaccionales para asegurar que la eliminación se refleje correctamente en todos los componentes.
+
+---
+
+# Pruebas Unitarias
+
+## VehicleServiceTest
 
 Valida:
 
-* Creación de vehículos
-* Búsqueda por ID
-* Eliminación de vehículos
-* Consulta de vehículos existentes
-* Manejo de vehículos inexistentes
+* Creación de vehículos.
+* Consulta por ID.
+* Eliminación de vehículos.
+* Vehículos inexistentes.
 
-#### VehicleStatusServiceTest
-
-Valida:
-
-* Estado EN_MOVIMIENTO
-* Estado DETENIDO
-* Estado SIN_SENAL
-* Cambios de estado
-* Reglas de transición
-
-#### MetricsServiceTest
+## VehicleStatusServiceTest
 
 Valida:
 
-* Conteo total de vehículos
-* Vehículos en movimiento
-* Vehículos detenidos
-* Vehículos sin señal
+* EN_MOVIMIENTO.
+* DETENIDO.
+* SIN_SENAL.
+* Cambios de estado.
 
-#### FleetTelemetrySystemApplicationTests
+## MetricsServiceTest
 
 Valida:
 
-* Carga correcta del contexto Spring Boot
+* Conteo total de vehículos.
+* Vehículos en movimiento.
+* Vehículos detenidos.
+* Vehículos sin señal.
 
-### Resultado de ejecución
+## FleetTelemetrySystemApplicationTests
+
+Valida:
+
+* Carga correcta del contexto Spring Boot.
+
+Ejecutar:
 
 ```bash
 mvn test
@@ -349,61 +364,32 @@ mvn test
 Resultado:
 
 ```text
-Tests run: 13
-Failures: 0
-Errors: 0
-Skipped: 0
-
 BUILD SUCCESS
 ```
 
 ---
 
-## Dockerización
+# Docker
 
-El sistema puede ejecutarse completamente mediante Docker.
-
-### Construir imagen
+Construir imagen:
 
 ```bash
 docker build -t fleet-telemetry-system .
 ```
 
-### Ejecutar contenedor
+Ejecutar contenedor:
 
 ```bash
-docker run -p 8082:8081 fleet-telemetry-system
+docker run -d --name fleet-telemetry-system -p 8082:8081 fleet-telemetry-system
 ```
 
-Aplicación disponible en:
-
-```text
-http://localhost:8082
-```
-
----
-
-## Docker Compose
-
-Levantar servicios:
-
-```bash
-docker compose up -d
-```
-
-Verificar contenedores:
+Verificar ejecución:
 
 ```bash
 docker ps
 ```
 
-Detener servicios:
-
-```bash
-docker compose down
-```
-
-Aplicación disponible en:
+API disponible en:
 
 ```text
 http://localhost:8082
@@ -411,101 +397,117 @@ http://localhost:8082
 
 ---
 
-## Ejecución Local
+# Docker Compose
 
-Clonar repositorio:
+Levantar aplicación:
+
+```bash
+docker compose up -d
+```
+
+Detener aplicación:
+
+```bash
+docker compose down
+```
+
+Ver logs:
+
+```bash
+docker compose logs -f
+```
+
+API disponible en:
+
+```text
+http://localhost:8082
+```
+
+---
+
+# Ejecución Rápida
 
 ```bash
 git clone https://github.com/dabbi20/Sistema-de-Monitoreo-y-Telemetria-de-Flotas-GPS-Backend.git
+cd Sistema-de-Monitoreo-y-Telemetria-de-Flotas-GPS-Backend
+docker compose up -d
 ```
 
-Entrar al proyecto:
-
-```bash
-cd fleet-telemetry-system
-```
-
-Compilar:
-
-```bash
-./mvnw clean install
-```
-
-Ejecutar:
-
-```bash
-./mvnw spring-boot:run
-```
-
-Aplicación disponible en:
+Backend disponible en:
 
 ```text
-http://localhost:8081
+http://localhost:8082
 ```
 
 ---
 
-## Estructura del Proyecto
+# Funcionalidades Adicionales Implementadas
 
-```text
-fleet-telemetry-system
-│
-├── docs
-│   ├── components-diagram.png
-│   ├── domain-model.png
-│   ├── postman-create-vehicle.png
-│   ├── postman-get-events.png
-│   ├── postman-get-metrics.png
-│   ├── postman-get-vehicles.png
-│   ├── postman-validation-error.png
-│   ├── postman-vehicle-moving.png
-│   ├── postman-vehicle-not-found.png
-│   └── postman-vehicle-stopped.png
-│
-├── src
-│   ├── main
-│   │   ├── java
-│   │   └── resources
-│   │
-│   └── test
-│       └── java
-│
-├── Dockerfile
-├── docker-compose.yml
-├── pom.xml
-└── README.md
-```
+Además de los requisitos mínimos solicitados, se implementaron:
+
+* Historial GPS por vehículo.
+* Eventos de auditoría.
+* Métricas operativas.
+* Pruebas unitarias.
+* Docker.
+* Docker Compose.
+* Diagramas UML.
+* Manejo global de excepciones.
+* Documentación técnica.
 
 ---
 
-## Estado del Proyecto
+# Reporte de IA
 
-Proyecto finalizado en su versión MVP.
+## 1. ¿Qué herramientas de IA utilicé?
 
-Funcionalidades implementadas:
-
-* Registro de posiciones GPS
-* Gestión automática de estados de vehículos
-* Historial de posiciones
-* Eventos de auditoría
-* Métricas operativas
-* Validaciones de entrada
-* Manejo global de excepciones
-* Base de datos H2
-* API REST
-* Pruebas unitarias
-* Docker
-* Docker Compose
-* Documentación UML
-* Evidencias Postman
+* ChatGPT
+* GitHub Copilot
 
 ---
 
-## Autor
+## 2. ¿Para qué tareas específicas me apoyé en IA?
 
-### David Carrasco
+* Generación inicial de clases y estructuras.
+* Revisión de validaciones REST.
+* Apoyo para pruebas unitarias.
+* Documentación técnica.
+* Revisión de buenas prácticas Spring Boot.
 
-Estudiante de Ingeniería de Sistemas | Desarrollador Backend Java
+Todas las sugerencias fueron revisadas y adaptadas antes de ser incorporadas al proyecto.
+
+---
+
+## 3. ¿Qué error de la IA encontré y cómo lo corregí?
+
+Durante el desarrollo algunas sugerencias iniciales no coincidían completamente con las reglas de negocio requeridas para la prueba.
+
+Por ejemplo, algunas propuestas marcaban un vehículo como DETENIDO inmediatamente al recibir coordenadas repetidas. Después de revisar el enunciado y validar el comportamiento esperado, se ajustó la lógica para que el cambio ocurriera únicamente después de acumular al menos 60 segundos consecutivos sin movimiento.
+
+También fue necesario corregir manualmente configuraciones de pruebas unitarias e integración entre frontend y backend.
+
+Esto reforzó la importancia de utilizar la IA como una herramienta de apoyo y validar siempre sus resultados antes de incorporarlos al proyecto.
+
+---
+
+# Video de Sustentación
+
+Enlace:
+
+PENDIENTE
+
+---
+
+# Autor
+
+## David Carrasco
+
+Ingeniero de Sistemas
+
+Especialización en Desarrollo de Software y Automatizaciones
+
+Desarrollador Full Stack
 
 GitHub:
+
 https://github.com/dabbi20
